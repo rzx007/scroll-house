@@ -1,0 +1,366 @@
+/* Interface for the walkthrough.
+   Palette is the drawing itself: warm paper, ink, one rust accent.
+   --ui is an RGB triplet written by the renderer each frame, so the interface
+   stays legible when the sheet fades into dusk. */
+
+:root {
+  --ui: 27 25 23; /* ink on paper; flips to paper-on-dusk once outside */
+  --paper: #f4f1e9;
+  --accent: #a8562f;
+  --ui-faint: rgb(var(--ui) / 0.5);
+  --ui-hair: rgb(var(--ui) / 0.16);
+  --sans: ui-sans-serif, system-ui, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono",
+    monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: rgb(var(--ui));
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+#scroll {
+  height: 1000vh;
+  pointer-events: none;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+#stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ------------------------------------------------------------ plan labels */
+#labels {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  transition: none;
+}
+
+.plan-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.plan-label::before {
+  content: "";
+  width: 1px;
+  height: 9px;
+  background: rgb(var(--ui) / 0.4);
+}
+
+.plan-label__name {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgb(var(--ui) / 0.86);
+}
+
+.plan-label__dim {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  color: rgb(var(--ui) / 0.46);
+}
+
+.plan-label.is-major .plan-label__name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.plan-label.is-major .plan-label__dim {
+  font-size: 10.5px;
+}
+
+.plan-label.is-major::before {
+  height: 14px;
+}
+
+.plan-label.small .plan-label__name {
+  font-size: 10px;
+}
+
+.plan-label.small .plan-label__dim {
+  font-size: 8.5px;
+}
+
+/* ---------------------------------------------------------------- overlay */
+#overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.wordmark {
+  position: absolute;
+  top: 34px;
+  left: 38px;
+  margin: 0;
+}
+
+.wordmark__name {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+}
+
+.wordmark__sub {
+  margin: 6px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--ui-faint);
+}
+
+/* caption block, bottom left */
+.caption {
+  position: absolute;
+  left: 38px;
+  bottom: 46px;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  column-gap: 14px;
+  align-items: baseline;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.caption.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.caption__index {
+  grid-row: 1 / span 2;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  padding-top: 3px;
+}
+
+.caption__title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
+}
+
+.caption__sub {
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  color: var(--ui-faint);
+  margin-top: 4px;
+}
+
+/* phase rail, right edge */
+.rail {
+  position: absolute;
+  right: 38px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 15px;
+}
+
+.rail__tick {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  opacity: 0.34;
+  transition: opacity 0.45s ease;
+}
+
+.rail__tick.is-active {
+  opacity: 1;
+}
+
+.rail__num {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: var(--ui-faint);
+}
+
+.rail__tick.is-active .rail__num {
+  color: var(--accent);
+}
+
+.rail__name {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.rail__track {
+  position: absolute;
+  right: 24px;
+  top: calc(50% - 132px);
+  width: 1px;
+  height: 264px;
+  background: var(--ui-hair);
+}
+
+.rail__fill {
+  width: 100%;
+  height: 100%;
+  background: rgb(var(--ui) / 0.55);
+  transform-origin: top center;
+  transform: scaleY(0);
+}
+
+/* scroll hint */
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 10.5px;
+  letter-spacing: 0.34em;
+  color: var(--ui-faint);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.hint::after {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 22px;
+  margin: 10px auto 0;
+  background: linear-gradient(to bottom, rgb(var(--ui) / 0.5), rgb(var(--ui) / 0));
+}
+
+.hint.is-gone {
+  opacity: 0;
+  transform: translateX(-50%) translateY(6px);
+}
+
+/* phase note, bottom right */
+.phase-note {
+  position: absolute;
+  right: 38px;
+  bottom: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--ui-faint);
+  text-align: right;
+}
+
+.phase-note span:first-child {
+  font-family: var(--mono);
+  color: var(--accent);
+}
+
+/* drawing title block, bottom right, visible only while the sheet is up */
+.title-block {
+  position: absolute;
+  right: 38px;
+  bottom: 100px;
+  width: 196px;
+  border: 1px solid rgb(var(--ui) / 0.35);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.title-block__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 9px;
+  border-bottom: 1px solid rgb(var(--ui) / 0.16);
+}
+
+.title-block__row:last-child {
+  border-bottom: 0;
+}
+
+.title-block__row span {
+  color: var(--ui-faint);
+}
+
+.title-block__row strong {
+  font-weight: 600;
+}
+
+/* boot curtain */
+#boot {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  transition: opacity 0.9s ease;
+}
+
+#boot span {
+  font-size: 11px;
+  letter-spacing: 0.42em;
+  color: rgb(27 25 23 / 0.45);
+}
+
+#boot.is-gone {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* keep the sheet furniture from piling up on narrow screens */
+@media (max-width: 860px) {
+  .wordmark {
+    top: 22px;
+    left: 20px;
+  }
+  .caption {
+    left: 20px;
+    bottom: 30px;
+  }
+  .rail,
+  .rail__track,
+  .title-block {
+    display: none;
+  }
+  .phase-note {
+    right: 20px;
+    bottom: 30px;
+  }
+}

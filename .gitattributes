@@ -1,0 +1,11 @@
+# Keep sources at LF regardless of the platform they were authored on, so a
+# Windows checkout and a Linux checkout are byte-identical.
+* text=auto eol=lf
+
+# Vendored upstream code and binary assets must never be line-ending converted:
+# they are byte-for-byte copies and should stay that way.
+vendor/** -text
+*.hdr -text
+*.png -text
+*.jpg -text
+*.webp -text

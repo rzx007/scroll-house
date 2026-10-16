@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>一栋住宅 · 图纸即模型</title>
+    <meta
+      name="description"
+      content="滚动驱动的住宅漫游：户型图与建筑是同一个 three.js 模型，墙体从图纸中升起，镜头下降到入户门前并穿行进入第一个房间。"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- fixed render target -->
+    <div id="stage" aria-hidden="true"></div>
+    <div id="labels" aria-hidden="true"></div>
+
+    <!-- fixed interface -->
+    <div id="overlay">
+      <header class="wordmark">
+        <p class="wordmark__name">一栋住宅</p>
+        <p class="wordmark__sub">A Residence · 图纸即模型</p>
+      </header>
+
+      <div class="caption" id="caption">
+        <span class="caption__index" id="caption-index">01</span>
+        <span class="caption__title" id="caption-title">图纸</span>
+        <span class="caption__sub" id="caption-sub">1.20 m 剖切 · 长焦垂直俯视</span>
+      </div>
+
+      <nav class="rail" id="rail" aria-label="滚动阶段"></nav>
+      <div class="rail__track"><div class="rail__fill" id="rail-fill"></div></div>
+
+      <p class="hint" id="hint">向下滚动</p>
+
+      <div class="phase-note">
+        <span>Phase 1</span>
+        <span>图纸 → 墙体升起 → 入户 → 第一间房</span>
+      </div>
+    </div>
+
+    <div id="boot"><span>载入图纸</span></div>
+
+    <!-- scroll driver: 10 screens -->
+    <div id="scroll"></div>
+
+    <!-- surface a startup failure on the sheet instead of a blank page -->
+    <script>
+      (function () {
+        function fail(label, detail) {
+          var boot = document.getElementById('boot');
+          if (!boot) return;
+          boot.classList.remove('is-gone');
+          boot.innerHTML =
+            '<pre style="max-width:70ch;white-space:pre-wrap;font:12px/1.6 ui-monospace,Consolas,monospace;color:#8c2f1a">' +
+            label +
+            '\n\n' +
+            String(detail).replace(/[<&]/g, '') +
+            '</pre>';
+        }
+        window.addEventListener('error', function (e) {
+          fail('载入失败 · Runtime error', (e.error && e.error.stack) || e.message);
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          fail('载入失败 · Unhandled rejection', (e.reason && e.reason.stack) || e.reason);
+        });
+      })();
+    </script>
+
+    <!-- libraries are plain scripts so the page stays build-free -->
+    <script src="vendor/gsap.min.js"></script>
+    <script src="vendor/ScrollTrigger.min.js"></script>
+    <script src="vendor/lenis.min.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/three.module.js",
+          "three/addons/": "./vendor/three/addons/"
+        }
+      }
+    </script>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
